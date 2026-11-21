@@ -104,6 +104,17 @@ def test_random_forest_trennt_die_gruppen(processed):
     assert len(top & set(ds.true_biomarkers)) >= 5
 
 
+def test_roc_kurve_aus_out_of_fold_werten(processed, tmp_path):
+    from biomarker import plots
+
+    ds, log_data = processed
+    forest = ml.random_forest_cv(log_data, ds.groups, positive="patient", folds=3)
+    assert len(forest.oof_probability) == len(log_data)
+    auc = plots.roc_plot(forest.y_true, forest.oof_probability, tmp_path / "roc.png")
+    assert auc > 0.8
+    assert (tmp_path / "roc.png").stat().st_size > 1000
+
+
 def test_ohne_unterschied_kaum_treffer():
     # Kein Effekt -> FDR-Kontrolle: fast keine signifikanten Features
     ds = make_lcms_dataset(n_per_group=20, n_features=200, effect=0.0, seed=11)
