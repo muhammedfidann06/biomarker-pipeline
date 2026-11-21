@@ -69,6 +69,7 @@ def main() -> None:
     forest = ml.random_forest_cv(log_data, groups, positive=args.case)
     forest.importance.head(30).to_csv(args.out / "rf_importance.csv", header=["importance"])
     print(f"Random Forest AUC (5-fach CV): {forest.mean_auc:.3f}")
+    plots.roc_plot(forest.y_true, forest.oof_probability, args.out / "roc.png")
 
     summary = {
         "features_raw": int(raw.shape[1]),

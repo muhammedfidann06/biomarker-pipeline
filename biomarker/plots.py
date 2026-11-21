@@ -44,6 +44,29 @@ def pca_plot(scores: pd.DataFrame, groups: pd.Series, variance: np.ndarray, out:
     plt.close(fig)
 
 
+def roc_plot(y_true: np.ndarray, probability: np.ndarray, out: Path) -> float:
+    """ROC-Kurve: Wie gut trennt das Modell die Gruppen bei jeder Schwelle?
+
+    x = Falsch-Positiv-Rate, y = Richtig-Positiv-Rate. Die Diagonale ist Raten (AUC 0,5).
+    Gibt die AUC zurück.
+    """
+    from sklearn.metrics import roc_auc_score, roc_curve
+
+    fpr, tpr, _ = roc_curve(y_true, probability)
+    auc = float(roc_auc_score(y_true, probability))
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.plot(fpr, tpr, c="#e5534b", lw=2, label=f"Random Forest (AUC = {auc:.2f})")
+    ax.plot([0, 1], [0, 1], ls="--", c="#9e9e9e", label="Zufall")
+    ax.set_xlabel("Falsch-Positiv-Rate (1 − Spezifität)")
+    ax.set_ylabel("Richtig-Positiv-Rate (Sensitivität)")
+    ax.set_title("ROC-Kurve (Kreuzvalidierung)")
+    ax.legend(frameon=False, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    return auc
+
+
 def top_boxplots(log_data: pd.DataFrame, groups: pd.Series, features: list[str], out: Path) -> None:
     n = len(features)
     cols = min(n, 3)

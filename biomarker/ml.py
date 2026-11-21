@@ -25,6 +25,8 @@ def pca_scores(log_data: pd.DataFrame, n_components: int = 2) -> tuple[pd.DataFr
 class ForestResult:
     auc_per_fold: list[float]
     importance: pd.Series  # mittlere Wichtigkeit über alle Folds, sortiert
+    y_true: np.ndarray  # 1 = positive Gruppe
+    oof_probability: np.ndarray  # "out of fold": jede Probe wurde nur vom Modell OHNE sie bewertet
 
     @property
     def mean_auc(self) -> float:
@@ -48,13 +50,15 @@ def random_forest_cv(
     cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed)
     aucs: list[float] = []
     importances = np.zeros(X.shape[1])
+    oof = np.zeros(len(y))
 
     for train, test in cv.split(X, y):
         model = RandomForestClassifier(n_estimators=300, random_state=seed, n_jobs=-1)
         model.fit(X[train], y[train])
         prob = model.predict_proba(X[test])[:, 1]
+        oof[test] = prob
         aucs.append(roc_auc_score(y[test], prob))
         importances += model.feature_importances_ / folds
 
     imp = pd.Series(importances, index=log_data.columns).sort_values(ascending=False)
-    return ForestResult(aucs, imp)
+    return ForestResult(aucs, imp, y, oof)
