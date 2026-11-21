@@ -124,12 +124,14 @@ def test_ohne_unterschied_kaum_treffer():
 
 
 def test_kruskal_wallis_drei_gruppen():
-    # Gruppe "c" ist bei Feature "diff" deutlich höher, bei "gleich" nicht.
+    # Gruppe "c" ist bei Feature "diff" deutlich höher.
+    # "gleich" hat in jeder Gruppe GENAU dieselben Werte -> p = 1, kein Zufall im Test.
     rng = np.random.default_rng(5)
     groups = pd.Series(["a"] * 15 + ["b"] * 15 + ["c"] * 15)
+    same = rng.normal(0, 1, 15)
     df = pd.DataFrame({
         "diff": np.r_[rng.normal(0, 1, 30), rng.normal(3, 1, 15)],
-        "gleich": rng.normal(0, 1, 45),
+        "gleich": np.tile(same, 3),
     })
     res = stats.kruskal_wallis(df, groups)
     assert res.index[0] == "diff"

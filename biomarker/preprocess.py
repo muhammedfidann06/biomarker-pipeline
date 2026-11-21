@@ -74,7 +74,8 @@ def preprocess(
     filtered = zero_threshold(features, groups, max_zero_fraction)
     imputed = impute_knn(filtered) if imputation == "knn" else impute_half_minimum(filtered)
     if standard:
-        imputed[standard] = df[standard]
+        # concat statt imputed[standard] = …: vermeidet einen fragmentierten DataFrame (PerformanceWarning)
+        imputed = pd.concat([imputed, df[[standard]]], axis=1)
         normalized = normalize_internal_standard(imputed, standard)
     else:
         normalized = normalize_median(imputed)
