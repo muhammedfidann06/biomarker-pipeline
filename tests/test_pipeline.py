@@ -123,6 +123,34 @@ def test_ohne_unterschied_kaum_treffer():
     assert len(stats.significant(result)) <= 2
 
 
+def test_kruskal_wallis_drei_gruppen():
+    # Gruppe "c" ist bei Feature "diff" deutlich höher, bei "gleich" nicht.
+    rng = np.random.default_rng(5)
+    groups = pd.Series(["a"] * 15 + ["b"] * 15 + ["c"] * 15)
+    df = pd.DataFrame({
+        "diff": np.r_[rng.normal(0, 1, 30), rng.normal(3, 1, 15)],
+        "gleich": rng.normal(0, 1, 45),
+    })
+    res = stats.kruskal_wallis(df, groups)
+    assert res.index[0] == "diff"
+    assert res.loc["diff", "q_bh"] < 0.001
+    assert res.loc["gleich", "q_bh"] > 0.05
+
+
+def test_knn_imputation_fuellt_luecken_plausibel():
+    from biomarker.preprocess import impute_knn
+
+    # Probe 3 ist fast gleich wie Probe 1 -> der fehlende Wert sollte nahe bei Probe 1 sein
+    df = pd.DataFrame(
+        {"a": [100.0, 400.0, 101.0, 410.0], "b": [50.0, 200.0, 0.0, 190.0]},
+        index=["s1", "s2", "s3", "s4"],
+    )
+    out = impute_knn(df, k=1)
+    assert not out.isna().any().any()
+    assert out.loc["s3", "b"] == pytest.approx(50.0, rel=0.01)
+    assert out.loc["s1", "a"] == pytest.approx(100.0)  # vorhandene Werte bleiben
+
+
 def test_pca_form(processed):
     ds, log_data = processed
     scores, var = ml.pca_scores(log_data, n_components=3)
