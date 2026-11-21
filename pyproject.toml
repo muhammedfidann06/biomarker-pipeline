@@ -1,0 +1,9 @@
+[project]
+name = "biomarker-pipeline"
+version = "1.0.0"
+description = "LC-MS biomarker discovery: preprocessing, statistics, FDR correction, PCA and Random Forest"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
